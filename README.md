@@ -1,6 +1,14 @@
 # bacnet-point-list-linter
 
+[![CI](https://github.com/yassine2med/bacnet-point-list-linter/actions/workflows/ci.yml/badge.svg)](https://github.com/yassine2med/bacnet-point-list-linter/actions/workflows/ci.yml) ![Python](https://img.shields.io/badge/python-3.10%2B-3776ab) ![License](https://img.shields.io/badge/license-MIT-8fb08a)
+
 A controls contractor hands over a BACnet point list, and the names are inconsistent: `AHU1` next to `AHU01`, mixed case, spaces, two points with the same object instance, a supply air temperature set up as a binary value. Those errors surface later as broken graphics, trend logs and alarms. This command line tool reads a point list CSV and reports naming and object type problems line by line, so a building operations coordinator can send a clear correction list back to the contractor.
+
+![Screenshot](docs/screenshot.png)
+
+## What it is for
+
+A controls contractor hands over a BACnet point list (the list of sensors, setpoints and commands the building automation system reads and writes), and the names are inconsistent or mistyped. Building operations coordinators, controls engineers and commissioning agents use this tool to check the list before the graphics, trend logs and alarms are built on it. They get a line by line list of naming and object type problems to send back to the contractor.
 
 ## Install
 
@@ -10,13 +18,23 @@ python -m pip install -r requirements.txt
 python -m pytest -q
 ```
 
-## Usage
+## How to use
+
+| I want to | Command |
+|---|---|
+| Lint a point list CSV | `python -m bacnet_lint examples/points.csv` |
+| Allow a different maximum name length (default 32) | `python -m bacnet_lint examples/points.csv --max-length 40` |
+| Show help | `python -m bacnet_lint --help` |
+
+Exit code 1 when findings exist, 0 when clean, 2 when the file cannot be read. Input columns: `object_type, instance, name, units`. The sample file is invented (Building A, AHU and VAV units).
+
+Example:
 
 ```
 python -m bacnet_lint examples/points.csv
 ```
 
-Output (exit code 1 when findings exist, 0 when clean, 2 when the file cannot be read):
+Output:
 
 ```
 line 2 B003 [BLDGA.AHU01.SAT] name duplicated (case-insensitive)
@@ -37,9 +55,7 @@ line 16 B001 [-] point has no name
 15 finding(s)
 ```
 
-Input columns: `object_type, instance, name, units`. Use `--max-length N` to change the name length limit (default 32). The sample file is invented (Building A, AHU and VAV units).
-
-## How the logic works
+## How it works
 
 - The convention checked is `BUILDING.EQUIPNN.POINT`, upper case, with a two digit equipment number, for example `BLDGA.AHU01.SAT`.
 - B001 to B003, B007, B009, B010: name presence, pattern, whitespace, duplicates, equipment number digits, length and case.
